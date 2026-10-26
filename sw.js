@@ -1,4 +1,4 @@
-const CACHE = 'radiosvelo-v14';
+const CACHE = 'radiosvelo-v15';
 const SHELL = [
   './',
   'index.html',
@@ -14,7 +14,7 @@ const SHELL = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: 'reload' })))));
   self.skipWaiting();
 });
 
@@ -31,7 +31,8 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET' || url.origin !== self.location.origin) return;
   e.respondWith(
-    fetch(e.request)
+    // no-cache : ignore le cache HTTP de GitHub Pages (10 min) pour voir les mises à jour tout de suite
+    fetch(e.request, { cache: 'no-cache' })
       .then((res) => {
         const copy = res.clone();
         caches.open(CACHE).then((c) => c.put(e.request, copy));

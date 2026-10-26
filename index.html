@@ -15,12 +15,14 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="grid" id="grid"></main>
+  <div class="scroller">
+    <main class="grid" id="grid"></main>
 
-  <footer class="tools">
-    <button class="tool" id="edit">Réorganiser les radios</button>
-    <button class="tool" id="reset" hidden>Ordre par défaut</button>
-  </footer>
+    <footer class="tools">
+      <button class="tool" id="edit">Réorganiser les radios</button>
+      <button class="tool" id="reset" hidden>Ordre par défaut</button>
+    </footer>
+  </div>
 
   <audio id="audio" preload="none"></audio>
   <script src="app.js"></script>
