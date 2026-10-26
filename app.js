@@ -13,15 +13,18 @@ const STATIONS = [
   { id: 'fipmetal', brand: 'FIP', name: 'Metal', color: 'var(--fip)' },
   { id: 'fipnouveautes', brand: 'FIP', name: 'Nouveautés', color: 'var(--fip)' },
   { id: 'fipcultes', brand: 'FIP', name: 'Cultes', color: 'var(--fip)' },
-  { id: 'franceinter', brand: 'Radio France', name: 'France Inter', color: 'var(--inter)' },
-  { id: 'franceculture', brand: 'Radio France', name: 'France Culture', color: 'var(--culture)' },
+  { id: 'fipsacrefrancais', brand: 'FIP', name: 'Sacré Français', color: 'var(--fip)' },
+  { id: 'franceinter', brand: 'Radio France', name: 'France Inter', color: 'var(--inter)', logo: 'logos/franceinter.svg' },
+  { id: 'franceculture', brand: 'Radio France', name: 'France Culture', color: 'var(--culture)', logo: 'logos/franceculture.svg' },
 ];
+for (const s of STATIONS) s.logo ??= 'logos/fip.svg';
 const DEFAULT_ID = 'fipelectro';
 
 const audio = document.getElementById('audio');
 const grid = document.getElementById('grid');
 const statusEl = document.getElementById('status');
 const currentEl = document.getElementById('current');
+const currentLogo = document.getElementById('current-logo');
 const toggleBtn = document.getElementById('toggle');
 const iconPlay = document.getElementById('icon-play');
 const iconPause = document.getElementById('icon-pause');
@@ -47,7 +50,7 @@ function render() {
     btn.className = 'station';
     btn.style.setProperty('--c', s.color);
     btn.dataset.id = s.id;
-    btn.innerHTML = `<span class="brand">${s.brand}</span><span class="name">${s.name}</span>`;
+    btn.innerHTML = `<img class="logo" src="${s.logo}" alt=""><span class="name">${s.name}</span>`;
     btn.addEventListener('click', () => play(s));
     grid.appendChild(btn);
   }
@@ -55,11 +58,12 @@ function render() {
 
 function updateUI() {
   currentEl.textContent = label(current);
+  currentLogo.src = current.logo;
   for (const btn of grid.children) {
     btn.classList.toggle('active', btn.dataset.id === current.id);
   }
-  iconPlay.hidden = wantPlaying;
-  iconPause.hidden = !wantPlaying;
+  iconPlay.toggleAttribute('hidden', wantPlaying);
+  iconPause.toggleAttribute('hidden', !wantPlaying);
   toggleBtn.setAttribute('aria-label', wantPlaying ? 'Pause' : 'Lecture');
 
   if ('mediaSession' in navigator) {

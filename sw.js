@@ -1,4 +1,4 @@
-const CACHE = 'radiosvelo-v1';
+const CACHE = 'radiosvelo-v2';
 const SHELL = [
   './',
   'index.html',
@@ -8,6 +8,9 @@ const SHELL = [
   'icons/icon-192.png',
   'icons/icon-512.png',
   'icons/apple-touch-icon.png',
+  'logos/fip.svg',
+  'logos/franceinter.svg',
+  'logos/franceculture.svg',
 ];
 
 self.addEventListener('install', (e) => {
