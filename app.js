@@ -2,20 +2,20 @@ const STREAM = (mount) => `https://icecast.radiofrance.fr/${mount}-hifi.aac?id=r
 
 const STATIONS = [
   { id: 'fipelectro', brand: 'FIP', name: 'Electro', color: 'var(--fip)' },
+  { id: 'fipgroove', brand: 'FIP', name: 'Groove', color: 'var(--fip)' },
+  { id: 'fipreggae', brand: 'FIP', name: 'Reggae', color: 'var(--fip)' },
+  { id: 'fiphiphop', brand: 'FIP', name: 'Hip-Hop', color: 'var(--fip)' },
+  { id: 'franceculture', brand: 'Radio France', name: 'France Culture', color: 'var(--culture)', logo: 'logos/franceculture.svg' },
+  { id: 'franceinter', brand: 'Radio France', name: 'France Inter', color: 'var(--inter)', logo: 'logos/franceinter.svg' },
   { id: 'fip', brand: 'FIP', name: 'FIP', color: 'var(--fip)' },
   { id: 'fiprock', brand: 'FIP', name: 'Rock', color: 'var(--fip)' },
   { id: 'fipjazz', brand: 'FIP', name: 'Jazz', color: 'var(--fip)' },
-  { id: 'fipgroove', brand: 'FIP', name: 'Groove', color: 'var(--fip)' },
-  { id: 'fiphiphop', brand: 'FIP', name: 'Hip-Hop', color: 'var(--fip)' },
   { id: 'fippop', brand: 'FIP', name: 'Pop', color: 'var(--fip)' },
   { id: 'fipworld', brand: 'FIP', name: 'Monde', color: 'var(--fip)' },
-  { id: 'fipreggae', brand: 'FIP', name: 'Reggae', color: 'var(--fip)' },
   { id: 'fipmetal', brand: 'FIP', name: 'Metal', color: 'var(--fip)' },
   { id: 'fipnouveautes', brand: 'FIP', name: 'Nouveautés', color: 'var(--fip)' },
   { id: 'fipcultes', brand: 'FIP', name: 'Cultes', color: 'var(--fip)' },
   { id: 'fipsacrefrancais', brand: 'FIP', name: 'Sacré Français', color: 'var(--fip)' },
-  { id: 'franceinter', brand: 'Radio France', name: 'France Inter', color: 'var(--inter)', logo: 'logos/franceinter.svg' },
-  { id: 'franceculture', brand: 'Radio France', name: 'France Culture', color: 'var(--culture)', logo: 'logos/franceculture.svg' },
 ];
 for (const s of STATIONS) s.logo ??= 'logos/fip.svg';
 const DEFAULT_ID = 'fipelectro';
