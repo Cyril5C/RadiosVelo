@@ -1,4 +1,4 @@
-const CACHE = 'radiosvelo-v12';
+const CACHE = 'radiosvelo-v13';
 const SHELL = [
   './',
   'index.html',
