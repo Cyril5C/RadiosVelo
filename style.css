@@ -182,3 +182,25 @@ svg[hidden] { display: none; }
   font-size: 22px;
 }
 .overlay-btn svg { width: 45%; height: 45%; }
+.overlay-btn:active { transform: scale(.96); }
+.overlay-btn .spinner,
+.overlay-btn .loading-text { display: none; }
+.overlay-btn.loading {
+  background: #5a2a45;
+  color: rgba(255, 255, 255, .75);
+  cursor: default;
+  transform: none;
+}
+.overlay-btn.loading .start-icon,
+.overlay-btn.loading .start-text { display: none; }
+.overlay-btn.loading .spinner,
+.overlay-btn.loading .loading-text { display: block; }
+.spinner {
+  width: 35%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 10px solid rgba(255, 255, 255, .25);
+  border-top-color: #fff;
+  animation: spin .9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }

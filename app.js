@@ -30,6 +30,7 @@ const toggleBtn = document.getElementById('toggle');
 const iconPlay = document.getElementById('icon-play');
 const iconPause = document.getElementById('icon-pause');
 const overlay = document.getElementById('overlay');
+const startBtn = document.getElementById('start');
 const editBtn = document.getElementById('edit');
 const resetBtn = document.getElementById('reset');
 
@@ -143,7 +144,7 @@ async function play(station = current) {
   setStatus('Connexion…');
   try {
     await audio.play();
-    overlay.hidden = true;
+    hideOverlay();
   } catch (err) {
     switching = false;
     if (err.name === 'NotAllowedError') {
@@ -151,11 +152,25 @@ async function play(station = current) {
       updateUI();
       setStatus('Prêt');
       document.getElementById('overlay-name').textContent = label(current);
+      setStarting(false);
       overlay.hidden = false;
-    } else if (err.name !== 'AbortError') {
-      scheduleRetry();
+    } else {
+      // Problème réseau : on laisse le lecteur afficher la reconnexion
+      hideOverlay();
+      if (err.name !== 'AbortError') scheduleRetry();
     }
   }
+}
+
+// Retour visuel immédiat : le flux peut mettre quelques secondes à démarrer
+function setStarting(on) {
+  startBtn.disabled = on;
+  startBtn.classList.toggle('loading', on);
+}
+
+function hideOverlay() {
+  overlay.hidden = true;
+  setStarting(false);
 }
 
 function pause() {
@@ -204,7 +219,11 @@ audio.addEventListener('pause', () => {
 window.addEventListener('online', () => wantPlaying && play(current));
 
 toggleBtn.addEventListener('click', () => (wantPlaying ? pause() : play()));
-document.getElementById('start').addEventListener('click', () => play());
+startBtn.addEventListener('click', () => {
+  if (startBtn.disabled) return;
+  setStarting(true);
+  play();
+});
 editBtn.addEventListener('click', () => {
   editing = !editing;
   render();
