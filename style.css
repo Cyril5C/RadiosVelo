@@ -79,33 +79,32 @@ svg[hidden] { display: none; }
 /* Grille de stations */
 .grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--gap);
   padding: 16px;
 }
-@media (min-width: 700px) {
-  .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
 .station {
-  min-height: 112px;
-  padding: 14px;
+  width: 100%;
+  min-height: 96px;
+  padding: 12px 16px;
   border-radius: 20px;
   background: var(--panel);
   border: 4px solid transparent;
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 10px;
+  align-items: center;
+  gap: 16px;
   text-align: left;
 }
 .station .logo {
-  width: 52px;
-  height: 52px;
-  border-radius: 12px;
+  flex: none;
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
 }
 .station .name {
-  font-size: 24px;
+  flex: 1;
+  min-width: 0;
+  font-size: 28px;
   font-weight: 800;
   line-height: 1.1;
   overflow-wrap: anywhere;
@@ -126,13 +125,13 @@ svg[hidden] { display: none; }
 .grid.editing .station:active { transform: none; }
 .grid.editing .station.active .logo { box-shadow: none; }
 .move {
+  flex: none;
   display: flex;
   gap: 8px;
-  width: 100%;
 }
 .move button {
-  flex: 1;
-  height: 52px;
+  width: 56px;
+  height: 56px;
   border-radius: 12px;
   background: #2e2e38;
   font-size: 22px;
