@@ -23,12 +23,6 @@ const ORDER_KEY = 'radiosvelo-order';
 
 const audio = document.getElementById('audio');
 const grid = document.getElementById('grid');
-const statusEl = document.getElementById('status');
-const currentEl = document.getElementById('current');
-const currentLogo = document.getElementById('current-logo');
-const toggleBtn = document.getElementById('toggle');
-const iconPlay = document.getElementById('icon-play');
-const iconPause = document.getElementById('icon-pause');
 const editBtn = document.getElementById('edit');
 const resetBtn = document.getElementById('reset');
 
@@ -38,13 +32,19 @@ let retryTimer = null;
 let retryDelay = 2000;
 let switching = false;
 let editing = false;
+// Aucune radio n'est mise en avant tant qu'on n'en a pas touché une (ou que la lecture n'a pas démarré)
+let started = false;
+let status = { text: '', kind: '' };
 let order = loadOrder();
 
 const label = (s) => (s.brand === 'FIP' && s.name !== 'FIP' ? `FIP ${s.name}` : s.name);
 
+const ICON_PLAY = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+const ICON_PAUSE = '<svg viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>';
+
 function setStatus(text, kind = '') {
-  statusEl.textContent = text;
-  statusEl.className = `now-label ${kind}`;
+  status = { text, kind };
+  updateUI();
 }
 
 // Ordre personnalisé : stations connues dans l'ordre enregistré, les nouvelles à la fin
@@ -81,7 +81,8 @@ function render() {
     tile.className = 'station';
     tile.style.setProperty('--c', s.color);
     tile.dataset.id = s.id;
-    tile.innerHTML = `<img class="logo" src="${s.logo}" alt=""><span class="name">${s.name}</span>`;
+    tile.innerHTML = `<img class="logo" src="${s.logo}" alt="">
+      <span class="info"><span class="name">${s.name}</span><span class="status"></span></span>`;
     if (editing) {
       const controls = document.createElement('div');
       controls.className = 'move';
@@ -95,7 +96,15 @@ function render() {
       }
       tile.appendChild(controls);
     } else {
-      tile.addEventListener('click', () => play(s));
+      const toggle = document.createElement('span');
+      toggle.className = 'toggle';
+      toggle.setAttribute('aria-hidden', 'true');
+      tile.appendChild(toggle);
+      tile.addEventListener('click', () => {
+        // Toucher la radio en cours = lecture/pause, une autre = changer de radio
+        if (s === current && started && wantPlaying) pause();
+        else play(s);
+      });
     }
     grid.appendChild(tile);
   });
@@ -106,14 +115,15 @@ function render() {
 }
 
 function updateUI() {
-  currentEl.textContent = label(current);
-  currentLogo.src = current.logo;
-  for (const btn of grid.children) {
-    btn.classList.toggle('active', btn.dataset.id === current.id);
+  for (const tile of grid.children) {
+    const active = started && tile.dataset.id === current.id;
+    tile.classList.toggle('active', active);
+    const st = tile.querySelector('.status');
+    st.textContent = active ? status.text : '';
+    st.className = `status ${active ? status.kind : ''}`;
+    const toggle = tile.querySelector('.toggle');
+    if (toggle) toggle.innerHTML = active ? (wantPlaying ? ICON_PAUSE : ICON_PLAY) : '';
   }
-  iconPlay.toggleAttribute('hidden', wantPlaying);
-  iconPause.toggleAttribute('hidden', !wantPlaying);
-  toggleBtn.setAttribute('aria-label', wantPlaying ? 'Pause' : 'Lecture');
 
   if ('mediaSession' in navigator) {
     navigator.mediaSession.metadata = new MediaMetadata({
@@ -134,7 +144,8 @@ function load(station) {
   audio.src = `${STREAM(station.id)}&t=${Date.now()}`;
 }
 
-async function play(station = current) {
+async function play(station = current, auto = false) {
+  if (!auto) started = true;
   wantPlaying = true;
   // Toujours repartir du direct, jamais d'un tampon en différé
   if (station !== current || audio.paused || audio.error) load(station);
@@ -145,10 +156,9 @@ async function play(station = current) {
   } catch (err) {
     switching = false;
     if (err.name === 'NotAllowedError') {
-      // Lecture auto bloquée (iPhone) : on attend un toucher sur ▶ ou une radio
+      // Lecture auto bloquée (iPhone) : on attend un toucher sur une radio
       wantPlaying = false;
-      updateUI();
-      setStatus('Prêt');
+      setStatus('');
     } else if (err.name !== 'AbortError') {
       scheduleRetry();
     }
@@ -181,6 +191,7 @@ function step(delta) {
 }
 
 audio.addEventListener('playing', () => {
+  started = true;
   switching = false;
   retryDelay = 2000;
   setStatus('En direct', 'live');
@@ -200,7 +211,6 @@ audio.addEventListener('pause', () => {
 
 window.addEventListener('online', () => wantPlaying && play(current));
 
-toggleBtn.addEventListener('click', () => (wantPlaying ? pause() : play()));
 editBtn.addEventListener('click', () => {
   editing = !editing;
   render();
@@ -225,4 +235,4 @@ if ('serviceWorker' in navigator) {
 }
 
 render();
-play(current);
+play(current, true);

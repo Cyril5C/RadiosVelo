@@ -15,25 +15,12 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="player">
-    <img class="now-logo" id="current-logo" src="logos/fip.svg" alt="">
-    <div class="now">
-      <div class="now-label" id="status">Prêt</div>
-      <div class="now-name" id="current">FIP Electro</div>
-    </div>
-    <button class="toggle" id="toggle" aria-label="Lecture">
-      <svg id="icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-      <svg id="icon-pause" viewBox="0 0 24 24" hidden><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
-    </button>
-  </header>
-
   <main class="grid" id="grid"></main>
 
   <footer class="tools">
     <button class="tool" id="edit">Réorganiser les radios</button>
     <button class="tool" id="reset" hidden>Ordre par défaut</button>
   </footer>
-
 
   <audio id="audio" preload="none"></audio>
   <script src="app.js"></script>
