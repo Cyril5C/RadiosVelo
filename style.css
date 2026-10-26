@@ -6,6 +6,7 @@
   --fip: #e2007a;
   --inter: #e20134;
   --culture: #762b84;
+  --meuh: #0098ff;
   --gap: 12px;
   /* Marge sous la Dynamic Island / l'encoche (mode PWA) */
   --top: calc(env(safe-area-inset-top) + 36px);

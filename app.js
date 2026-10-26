@@ -16,6 +16,14 @@ const STATIONS = [
   { id: 'fipnouveautes', brand: 'FIP', name: 'Nouveautés', color: 'var(--fip)' },
   { id: 'fipcultes', brand: 'FIP', name: 'Cultes', color: 'var(--fip)' },
   { id: 'fipsacrefrancais', brand: 'FIP', name: 'Sacré Français', color: 'var(--fip)' },
+  {
+    id: 'radiomeuh',
+    brand: 'Radio Meuh',
+    name: 'Radio Meuh',
+    color: 'var(--meuh)',
+    logo: 'logos/radiomeuh.png',
+    url: 'https://radiomeuh2.ice.infomaniak.ch/radiomeuh2-128.mp3',
+  },
 ];
 for (const s of STATIONS) s.logo ??= 'logos/fip.svg';
 const DEFAULT_ID = 'fipelectro';
@@ -128,7 +136,7 @@ function updateUI() {
   if ('mediaSession' in navigator) {
     navigator.mediaSession.metadata = new MediaMetadata({
       title: label(current),
-      artist: 'Radio France',
+      artist: current.brand === 'FIP' ? 'Radio France' : current.brand,
       album: 'Radios Vélo',
       artwork: [{ src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' }],
     });
@@ -141,7 +149,8 @@ function load(station) {
   current = station;
   switching = true;
   // Paramètre anti-cache pour forcer une nouvelle connexion au flux live
-  audio.src = `${STREAM(station.id)}&t=${Date.now()}`;
+  const url = station.url ?? STREAM(station.id);
+  audio.src = `${url}${url.includes('?') ? '&' : '?'}t=${Date.now()}`;
 }
 
 async function play(station = current, auto = false) {
