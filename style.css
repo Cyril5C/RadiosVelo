@@ -22,7 +22,7 @@ html, body {
 
 body {
   min-height: 100dvh;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
 button { font: inherit; color: inherit; border: 0; cursor: pointer; }
@@ -38,6 +38,8 @@ svg[hidden] { display: none; }
   align-items: center;
   gap: 16px;
   padding: 16px;
+  /* Encoche / Dynamic Island en mode PWA : l'en-tête collant garde la marge en défilant */
+  padding-top: calc(env(safe-area-inset-top) + 16px);
   background: var(--bg);
   border-bottom: 1px solid #2a2a33;
 }
@@ -158,3 +160,8 @@ svg[hidden] { display: none; }
   color: var(--bg);
 }
 .tool[hidden] { display: none; }
+
+/* App installée : un peu plus d'air sous la Dynamic Island */
+@media (display-mode: standalone) {
+  .player { padding-top: calc(env(safe-area-inset-top) + 28px); }
+}
