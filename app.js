@@ -23,8 +23,9 @@ const STATIONS = [
     color: 'var(--meuh)',
     logo: 'logos/radiomeuh.png',
     url: 'https://radiomeuh2.ice.infomaniak.ch/radiomeuh2-128.mp3',
+    disabled: true, // pubs dans le flux
   },
-];
+].filter((s) => !s.disabled);
 for (const s of STATIONS) s.logo ??= 'logos/fip.svg';
 const DEFAULT_ID = 'fipelectro';
 const ORDER_KEY = 'radiosvelo-order';
