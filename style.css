@@ -118,6 +118,48 @@ svg[hidden] { display: none; }
 }
 .station.active .logo { box-shadow: 0 0 0 2px var(--text); }
 
+/* Mode réorganisation */
+.grid.editing .station {
+  border: 4px dashed #3a3a45;
+  background: var(--panel);
+}
+.grid.editing .station:active { transform: none; }
+.grid.editing .station.active .logo { box-shadow: none; }
+.move {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+.move button {
+  flex: 1;
+  height: 52px;
+  border-radius: 12px;
+  background: #2e2e38;
+  font-size: 22px;
+}
+.move button:active { background: #44444f; }
+.move button:disabled { opacity: .25; }
+
+.tools {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  padding: 8px 16px 32px;
+}
+.tool {
+  height: 56px;
+  border-radius: 16px;
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 18px;
+  font-weight: 600;
+}
+.tool.primary {
+  background: var(--text);
+  color: var(--bg);
+}
+.tool[hidden] { display: none; }
+
 /* Écran de démarrage quand l'autoplay est bloqué */
 .overlay {
   position: fixed;

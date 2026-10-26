@@ -19,6 +19,7 @@ const STATIONS = [
 ];
 for (const s of STATIONS) s.logo ??= 'logos/fip.svg';
 const DEFAULT_ID = 'fipelectro';
+const ORDER_KEY = 'radiosvelo-order';
 
 const audio = document.getElementById('audio');
 const grid = document.getElementById('grid');
@@ -29,12 +30,16 @@ const toggleBtn = document.getElementById('toggle');
 const iconPlay = document.getElementById('icon-play');
 const iconPause = document.getElementById('icon-pause');
 const overlay = document.getElementById('overlay');
+const editBtn = document.getElementById('edit');
+const resetBtn = document.getElementById('reset');
 
 let current = STATIONS.find((s) => s.id === DEFAULT_ID);
 let wantPlaying = false;
 let retryTimer = null;
 let retryDelay = 2000;
 let switching = false;
+let editing = false;
+let order = loadOrder();
 
 const label = (s) => (s.brand === 'FIP' && s.name !== 'FIP' ? `FIP ${s.name}` : s.name);
 
@@ -43,17 +48,62 @@ function setStatus(text, kind = '') {
   statusEl.className = `now-label ${kind}`;
 }
 
+// Ordre personnalisé : stations connues dans l'ordre enregistré, les nouvelles à la fin
+function loadOrder() {
+  let ids = [];
+  try {
+    ids = JSON.parse(localStorage.getItem(ORDER_KEY)) || [];
+  } catch {}
+  const byId = new Map(STATIONS.map((s) => [s.id, s]));
+  const saved = ids.map((id) => byId.get(id)).filter(Boolean);
+  return [...saved, ...STATIONS.filter((s) => !saved.includes(s))];
+}
+
+function saveOrder() {
+  try {
+    localStorage.setItem(ORDER_KEY, JSON.stringify(order.map((s) => s.id)));
+  } catch {}
+}
+
+function move(station, delta) {
+  const i = order.indexOf(station);
+  const j = i + delta;
+  if (j < 0 || j >= order.length) return;
+  [order[i], order[j]] = [order[j], order[i]];
+  saveOrder();
+  render();
+}
+
 function render() {
   grid.innerHTML = '';
-  for (const s of STATIONS) {
-    const btn = document.createElement('button');
-    btn.className = 'station';
-    btn.style.setProperty('--c', s.color);
-    btn.dataset.id = s.id;
-    btn.innerHTML = `<img class="logo" src="${s.logo}" alt=""><span class="name">${s.name}</span>`;
-    btn.addEventListener('click', () => play(s));
-    grid.appendChild(btn);
-  }
+  grid.classList.toggle('editing', editing);
+  order.forEach((s, i) => {
+    const tile = document.createElement(editing ? 'div' : 'button');
+    tile.className = 'station';
+    tile.style.setProperty('--c', s.color);
+    tile.dataset.id = s.id;
+    tile.innerHTML = `<img class="logo" src="${s.logo}" alt=""><span class="name">${s.name}</span>`;
+    if (editing) {
+      const controls = document.createElement('div');
+      controls.className = 'move';
+      for (const [delta, text, aria] of [[-1, '▲', 'Monter'], [1, '▼', 'Descendre']]) {
+        const b = document.createElement('button');
+        b.textContent = text;
+        b.setAttribute('aria-label', `${aria} ${label(s)}`);
+        b.disabled = i + delta < 0 || i + delta >= order.length;
+        b.addEventListener('click', () => move(s, delta));
+        controls.appendChild(b);
+      }
+      tile.appendChild(controls);
+    } else {
+      tile.addEventListener('click', () => play(s));
+    }
+    grid.appendChild(tile);
+  });
+  editBtn.textContent = editing ? 'Terminé' : 'Réorganiser les radios';
+  editBtn.classList.toggle('primary', editing);
+  resetBtn.hidden = !editing;
+  updateUI();
 }
 
 function updateUI() {
@@ -129,8 +179,8 @@ function scheduleRetry() {
 }
 
 function step(delta) {
-  const i = STATIONS.indexOf(current);
-  play(STATIONS[(i + delta + STATIONS.length) % STATIONS.length]);
+  const i = order.indexOf(current);
+  play(order[(i + delta + order.length) % order.length]);
 }
 
 audio.addEventListener('playing', () => {
@@ -155,6 +205,15 @@ window.addEventListener('online', () => wantPlaying && play(current));
 
 toggleBtn.addEventListener('click', () => (wantPlaying ? pause() : play()));
 document.getElementById('start').addEventListener('click', () => play());
+editBtn.addEventListener('click', () => {
+  editing = !editing;
+  render();
+});
+resetBtn.addEventListener('click', () => {
+  order = [...STATIONS];
+  saveOrder();
+  render();
+});
 
 if ('mediaSession' in navigator) {
   const ms = navigator.mediaSession;
@@ -170,5 +229,4 @@ if ('serviceWorker' in navigator) {
 }
 
 render();
-updateUI();
 play(current);
