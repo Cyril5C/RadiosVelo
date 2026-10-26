@@ -8,7 +8,7 @@
   --culture: #762b84;
   --gap: 12px;
   /* Marge sous la Dynamic Island / l'encoche (mode PWA) */
-  --top: calc(env(safe-area-inset-top) + 23px);
+  --top: calc(env(safe-area-inset-top) + 36px);
   --bottom: calc(env(safe-area-inset-bottom) + 12px);
   /* 6 radios visibles sur la hauteur de l'écran */
   --tile-h: max(88px, calc((100dvh - var(--top) - var(--bottom) - 5 * var(--gap)) / 6));
