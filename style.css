@@ -163,5 +163,5 @@ svg[hidden] { display: none; }
 
 /* App installée : un peu plus d'air sous la Dynamic Island */
 @media (display-mode: standalone) {
-  .player { padding-top: calc(env(safe-area-inset-top) + 28px); }
+  .player { padding-top: calc(env(safe-area-inset-top) + 14px); }
 }
