@@ -185,6 +185,25 @@ function scheduleRetry() {
   retryDelay = Math.min(retryDelay * 2, 15000);
 }
 
+// Petit bip de confirmation au toucher (Web Audio, aucun fichier à charger)
+let beepCtx = null;
+function beep() {
+  try {
+    beepCtx ??= new (window.AudioContext || window.webkitAudioContext)();
+    if (beepCtx.state === 'suspended') beepCtx.resume();
+    const t = beepCtx.currentTime;
+    const osc = beepCtx.createOscillator();
+    const gain = beepCtx.createGain();
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(0.25, t + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.08);
+    osc.connect(gain).connect(beepCtx.destination);
+    osc.start(t);
+    osc.stop(t + 0.09);
+  } catch {}
+}
+
 function step(delta) {
   const i = order.indexOf(current);
   play(order[(i + delta + order.length) % order.length]);
@@ -208,6 +227,11 @@ audio.addEventListener('pause', () => {
     setStatus('En pause');
   }
 });
+
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('button');
+  if (btn && !btn.disabled) beep();
+}, true);
 
 window.addEventListener('online', () => wantPlaying && play(current));
 
