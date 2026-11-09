@@ -245,9 +245,10 @@ function pause() {
   clearTimeout(retryTimer);
   retryTimer = null;
   keepAlive(false);
+  // On garde la source : la vider coupe la session audio et, écran verrouillé,
+  // l'iPhone suspend l'app, qui ne reçoit plus le « play » des écouteurs.
+  // La reprise recharge de toute façon le direct (voir play()).
   audio.pause();
-  audio.removeAttribute('src');
-  audio.load();
   updateUI();
   setStatus('En pause');
 }
