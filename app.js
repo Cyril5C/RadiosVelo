@@ -45,7 +45,14 @@ const coverResetBtn = document.getElementById('cover-reset');
 let current = STATIONS.find((s) => s.id === DEFAULT_ID);
 let wantPlaying = false;
 let retryTimer = null;
-let retryDelay = 2000;
+const RETRY_MIN = 1000;
+const RETRY_MAX = 5000;
+// Sans progression du flux pendant ce délai, on considère la connexion perdue
+const STALL_MS = 8000;
+let retryDelay = RETRY_MIN;
+// Dernier moment où le flux a réellement avancé (ou où une connexion a été lancée)
+let lastProgress = 0;
+let lastTime = 0;
 let switching = false;
 let editing = false;
 // Aucune radio n'est mise en avant tant qu'on n'en a pas touché une (ou que la lecture n'a pas démarré)
@@ -167,7 +174,7 @@ function render() {
     }
     grid.appendChild(tile);
   });
-  editBtn.textContent = editing ? 'Terminé' : 'Réorganiser les radios';
+  editBtn.textContent = editing ? 'Terminé' : 'Réglages';
   editBtn.classList.toggle('primary', editing);
   resetBtn.hidden = !editing;
   coverTools.hidden = !editing;
@@ -202,18 +209,21 @@ function updateUI() {
 
 function load(station) {
   clearTimeout(retryTimer);
+  retryTimer = null;
   current = station;
   switching = true;
   // Paramètre anti-cache pour forcer une nouvelle connexion au flux live
   const url = station.url ?? STREAM(station.id);
   audio.src = `${url}${url.includes('?') ? '&' : '?'}t=${Date.now()}`;
+  lastProgress = Date.now();
+  lastTime = 0;
 }
 
-async function play(station = current, auto = false) {
+async function play(station = current, auto = false, force = false) {
   if (!auto) started = true;
   wantPlaying = true;
   // Toujours repartir du direct, jamais d'un tampon en différé
-  if (station !== current || audio.paused || audio.error) load(station);
+  if (force || station !== current || audio.paused || audio.error) load(station);
   updateUI();
   setStatus('Connexion…');
   try {
@@ -233,6 +243,8 @@ async function play(station = current, auto = false) {
 function pause() {
   wantPlaying = false;
   clearTimeout(retryTimer);
+  retryTimer = null;
+  keepAlive(false);
   audio.pause();
   audio.removeAttribute('src');
   audio.load();
@@ -240,14 +252,56 @@ function pause() {
   setStatus('En pause');
 }
 
-function scheduleRetry() {
-  if (!wantPlaying) return;
+// Nouvelle connexion au flux, même si l'élément audio croit encore lire
+function reconnect() {
   clearTimeout(retryTimer);
-  setStatus(`Reconnexion dans ${Math.round(retryDelay / 1000)} s…`, 'error');
-  retryTimer = setTimeout(() => {
-    if (wantPlaying) play(current).catch(() => {});
-  }, retryDelay);
-  retryDelay = Math.min(retryDelay * 2, 15000);
+  retryTimer = null;
+  if (wantPlaying) play(current, true, true).catch(() => {});
+}
+
+function scheduleRetry() {
+  if (!wantPlaying || retryTimer) return;
+  keepAlive(true);
+  const offline = navigator.onLine === false;
+  setStatus(offline ? 'Pas de réseau, reprise auto…' : 'Reconnexion…', 'error');
+  // Délais courts et plafonnés : en vélo le réseau revient souvent en quelques secondes
+  retryTimer = setTimeout(reconnect, retryDelay);
+  retryDelay = Math.min(retryDelay * 2, RETRY_MAX);
+}
+
+// Surveillance : détecte un flux figé qui ne déclenche aucune erreur
+setInterval(() => {
+  if (!wantPlaying) return;
+  if (audio.currentTime !== lastTime) {
+    lastTime = audio.currentTime;
+    lastProgress = Date.now();
+    return;
+  }
+  if (!retryTimer && Date.now() - lastProgress > STALL_MS) {
+    lastProgress = Date.now();
+    scheduleRetry();
+  }
+}, 1000);
+
+// Pendant une coupure, un son silencieux garde la session audio active,
+// pour que l'iPhone ne suspende pas l'app (écran verrouillé) avant la reprise
+let silence = null;
+function keepAlive(on) {
+  try {
+    if (on && !silence) {
+      beepCtx ??= new (window.AudioContext || window.webkitAudioContext)();
+      if (beepCtx.state === 'suspended') beepCtx.resume();
+      const osc = beepCtx.createOscillator();
+      const gain = beepCtx.createGain();
+      gain.gain.value = 0.0001;
+      osc.connect(gain).connect(beepCtx.destination);
+      osc.start();
+      silence = osc;
+    } else if (!on && silence) {
+      silence.stop();
+      silence = null;
+    }
+  } catch {}
 }
 
 // Petit bip de confirmation au toucher (Web Audio, aucun fichier à charger)
@@ -277,20 +331,27 @@ function step(delta) {
 audio.addEventListener('playing', () => {
   started = true;
   switching = false;
-  retryDelay = 2000;
+  retryDelay = RETRY_MIN;
+  lastProgress = Date.now();
+  keepAlive(false);
   setStatus('En direct', 'live');
 });
-audio.addEventListener('waiting', () => wantPlaying && setStatus('Chargement…'));
+audio.addEventListener('waiting', () => wantPlaying && !retryTimer && setStatus('Chargement…'));
 audio.addEventListener('error', () => wantPlaying && audio.src && scheduleRetry());
 audio.addEventListener('ended', () => wantPlaying && scheduleRetry());
-audio.addEventListener('stalled', () => wantPlaying && setStatus('Réseau lent…'));
+audio.addEventListener('stalled', () => wantPlaying && !retryTimer && setStatus('Réseau lent…'));
 audio.addEventListener('pause', () => {
-  // Pause imposée par le système (appel, autre app…) : refléter l'état
-  if (wantPlaying && !switching && !audio.ended && !audio.error) {
-    wantPlaying = false;
-    updateUI();
-    setStatus('En pause');
+  if (!wantPlaying || switching || audio.ended || audio.error) return;
+  // Coupure réseau qui se manifeste par une pause : on relance au lieu d'abandonner
+  if (navigator.onLine === false || Date.now() - lastProgress > 2000) {
+    scheduleRetry();
+    return;
   }
+  // Pause imposée par le système (appel, autre app…) : refléter l'état
+  wantPlaying = false;
+  keepAlive(false);
+  updateUI();
+  setStatus('En pause');
 });
 
 document.addEventListener('click', (e) => {
@@ -298,7 +359,17 @@ document.addEventListener('click', (e) => {
   if (btn && !btn.disabled) beep();
 }, true);
 
-window.addEventListener('online', () => wantPlaying && play(current));
+// Retour du réseau : reprise immédiate, sans attendre la fin du délai
+window.addEventListener('online', () => {
+  if (!wantPlaying) return;
+  retryDelay = RETRY_MIN;
+  reconnect();
+});
+window.addEventListener('offline', () => wantPlaying && scheduleRetry());
+// Retour au premier plan avec un flux figé : reprise immédiate
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && wantPlaying && Date.now() - lastProgress > 3000) reconnect();
+});
 
 editBtn.addEventListener('click', () => {
   editing = !editing;
