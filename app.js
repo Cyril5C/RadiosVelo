@@ -29,11 +29,18 @@ const STATIONS = [
 for (const s of STATIONS) s.logo ??= 'logos/fip.svg';
 const DEFAULT_ID = 'fipelectro';
 const ORDER_KEY = 'radiosvelo-order';
+const COVER_KEY = 'radiosvelo-cover';
+const COVER_SIZE = 512;
+const DEFAULT_COVER = 'icons/icon-512.png';
 
 const audio = document.getElementById('audio');
 const grid = document.getElementById('grid');
 const editBtn = document.getElementById('edit');
 const resetBtn = document.getElementById('reset');
+const coverTools = document.getElementById('cover-tools');
+const coverInput = document.getElementById('cover-input');
+const coverPreview = document.getElementById('cover-preview');
+const coverResetBtn = document.getElementById('cover-reset');
 
 let current = STATIONS.find((s) => s.id === DEFAULT_ID);
 let wantPlaying = false;
@@ -45,6 +52,7 @@ let editing = false;
 let started = false;
 let status = { text: '', kind: '' };
 let order = loadOrder();
+let cover = loadCover();
 
 const label = (s) => (s.brand === 'FIP' && s.name !== 'FIP' ? `FIP ${s.name}` : s.name);
 
@@ -71,6 +79,48 @@ function saveOrder() {
   try {
     localStorage.setItem(ORDER_KEY, JSON.stringify(order.map((s) => s.id)));
   } catch {}
+}
+
+// Image de couverture (écran verrouillé) : stockée en data URL, déjà redimensionnée
+function loadCover() {
+  try {
+    return localStorage.getItem(COVER_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function setCover(dataUrl) {
+  cover = dataUrl;
+  try {
+    if (dataUrl) localStorage.setItem(COVER_KEY, dataUrl);
+    else localStorage.removeItem(COVER_KEY);
+  } catch {}
+  render();
+}
+
+// Recadrage carré centré puis mise à COVER_SIZE × COVER_SIZE px
+async function resizeCover(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = new Image();
+    img.src = url;
+    await img.decode();
+    const side = Math.min(img.naturalWidth, img.naturalHeight);
+    const size = COVER_SIZE;
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(
+      img,
+      (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side,
+      0, 0, size, size,
+    );
+    return canvas.toDataURL('image/jpeg', 0.85);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
 }
 
 function move(station, delta) {
@@ -120,6 +170,9 @@ function render() {
   editBtn.textContent = editing ? 'Terminé' : 'Réorganiser les radios';
   editBtn.classList.toggle('primary', editing);
   resetBtn.hidden = !editing;
+  coverTools.hidden = !editing;
+  coverPreview.src = cover || DEFAULT_COVER;
+  coverResetBtn.hidden = !cover;
   updateUI();
 }
 
@@ -139,7 +192,9 @@ function updateUI() {
       title: label(current),
       artist: current.brand === 'FIP' ? 'Radio France' : current.brand,
       album: 'Radios Vélo',
-      artwork: [{ src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' }],
+      artwork: cover
+        ? [{ src: cover, sizes: `${COVER_SIZE}x${COVER_SIZE}`, type: 'image/jpeg' }]
+        : [{ src: DEFAULT_COVER, sizes: '512x512', type: 'image/png' }],
     });
     navigator.mediaSession.playbackState = wantPlaying ? 'playing' : 'paused';
   }
@@ -249,6 +304,17 @@ editBtn.addEventListener('click', () => {
   editing = !editing;
   render();
 });
+coverInput.addEventListener('change', async () => {
+  const file = coverInput.files[0];
+  coverInput.value = '';
+  if (!file) return;
+  try {
+    setCover(await resizeCover(file));
+  } catch {
+    alert("Impossible de lire cette image.");
+  }
+});
+coverResetBtn.addEventListener('click', () => setCover(null));
 resetBtn.addEventListener('click', () => {
   order = [...STATIONS];
   saveOrder();

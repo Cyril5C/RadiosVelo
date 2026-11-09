@@ -153,3 +153,26 @@ svg[hidden] { display: none; }
   color: var(--bg);
 }
 .tool[hidden] { display: none; }
+
+/* Image de couverture (écran verrouillé) */
+.cover-tools {
+  display: grid;
+  grid-template-columns: 112px 1fr;
+  gap: var(--gap);
+  align-items: center;
+}
+.cover-tools[hidden] { display: none; }
+.cover-preview {
+  grid-row: span 2;
+  width: 112px;
+  height: 112px;
+  border-radius: 16px;
+  object-fit: cover;
+  background: var(--panel);
+}
+.cover-pick {
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.cover-tools:has(#cover-reset[hidden]) .cover-preview { grid-row: auto; }
