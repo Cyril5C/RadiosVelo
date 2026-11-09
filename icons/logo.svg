@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="warm" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#b800c8"/>
+      <stop offset="1" stop-color="#ff1a1a"/>
+    </linearGradient>
+    <linearGradient id="cool" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#8a0a6a"/>
+      <stop offset="0.45" stop-color="#9a5aa6"/>
+      <stop offset="1" stop-color="#ff3a3a"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="#fff"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- roues : anneaux épais ouverts -->
+    <circle cx="140" cy="340" r="88" stroke="url(#warm)" stroke-width="40"
+            stroke-dasharray="415 138" transform="rotate(-90 140 340)"/>
+    <circle cx="372" cy="340" r="88" stroke="url(#cool)" stroke-width="40"
+            stroke-dasharray="415 138" transform="rotate(90 372 340)"/>
+    <!-- cadre -->
+    <path d="M140 340 L250 340 L210 210 Z M210 210 L338 210 L250 340 M338 210 L372 340"
+          stroke="#222" stroke-width="18"/>
+    <!-- selle et guidon -->
+    <path d="M190 192 H236 M326 176 L338 210 M326 176 H356" stroke="#222" stroke-width="18"/>
+    <!-- ondes radio -->
+    <path d="M372 142 A44 44 0 0 1 416 186" stroke="url(#cool)" stroke-width="18"/>
+    <path d="M372 96 A90 90 0 0 1 462 186" stroke="url(#warm)" stroke-width="18"/>
+  </g>
+</svg>
